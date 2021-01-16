@@ -1,0 +1,152 @@
+---
+title: "note 6 -Data wrangling2"
+author: "jenny"
+date: "2020/10/27"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(rvest)
+library(httr)
+```
+
+## scrap a table
+
+A table from the webpage
+
+```{r}
+url = "http://samhda.s3-us-gov-west-1.amazonaws.com/s3fs-public/field-uploads/2k15StateFiles/NSDUHsaeShortTermCHG2015.htm"
+
+drug_use_html = read_html(url)
+
+drug_use_html
+```
+
+extract the table
+
+```{r}
+drug_use_html %>%
+  html_nodes(css = "table") %>%
+  first() %>%
+  html_table() %>%
+  slice(-1) %>%
+  as_tibble()
+```
+
+```{r}
+swm_html = 
+  read_html("https://www.imdb.com/list/ls070150896/")
+```
+
+```{r}
+title_vec = 
+  swm_html %>%
+  html_nodes(".lister-item-header a") %>%
+  html_text()
+
+gross_rev_vec = 
+  swm_html %>%
+  html_nodes(".text-small:nth-child(7) span:nth-child(5)") %>%
+  html_text()
+
+runtime_vec = 
+  swm_html %>%
+  html_nodes(".runtime") %>%
+  html_text()
+
+swm_df = 
+  tibble(
+    title = title_vec,
+    rev = gross_rev_vec,
+    runtime = runtime_vec)
+```
+
+## Using an API
+
+```{r}
+nyc_water = 
+  GET("https://data.cityofnewyork.us/resource/ia2d-e54m.csv") %>% 
+  content("parsed")
+```
+
+```{r}
+nyc_water = 
+  GET("https://data.cityofnewyork.us/resource/ia2d-e54m.json") %>% 
+  content("text") %>%
+  jsonlite::fromJSON() %>%
+  as_tibble()
+```
+
+if you want to query the pages...
+
+```{r}
+brfss_smart2010 = 
+  GET("https://chronicdata.cdc.gov/resource/acme-vg9e.csv",
+      query = list("$limit" = 5000)) %>% 
+  content("parsed")
+```
+
+```{r}
+poke = 
+  GET("http://pokeapi.co/api/v2/pokemon/1") %>%
+  content()
+
+poke$name
+```
+
+```{r}
+nyc_cost = 
+  read_html("https://www.bestplaces.net/cost_of_living/city/new_york/new_york") %>%
+  html_nodes(css = "table") %>%
+  .[[1]] %>%
+  html_table(header = TRUE)
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

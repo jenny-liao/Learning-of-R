@@ -1,0 +1,505 @@
+---
+title: "note5-EDA"
+author: "jenny"
+date: "2020/10/17"
+output: html_document
+---
+
+```{r setup}
+library(tidyverse)
+library(ggridges)
+```
+
+```{r}
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728", "USC00519397", "USS0023B17S"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2017-01-01",
+    date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(
+      id, 
+      USW00094728 = "CentralPark_NY", 
+      USC00519397 = "Waikiki_HA",
+      USS0023B17S = "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
+```
+
+## Scatter plots!!
+
+Creat my frist plots in R.
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point()
+```
+
+New approach, same plot.
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point()
+```
+
+treat it as a R project.
+
+```{r}
+weather_plot = 
+  weather_df %>%
+  ggplot(aes(x = tmin, y = tmax))
+
+weather_plot + geom_point()
+```
+
+## Advanced scatter plot
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point() + 
+  geom_smooth(se = FALSE)
+```
+
+About `aes` placement.
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point(aes(color = name)) +
+  geom_smooth()
+#注意前后图表的区别
+```
+
+Let's facet sth.
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point() + 
+  geom_smooth(se = FALSE)+
+  facet_grid(. ~name)
+```
+
+```{r}
+ggplot(weather_df, aes(x = date, y = tmax, color = name)) + 
+  geom_smooth(se = FALSE) 
+```
+
+When there is a big data...
+
+```{r}
+ggplot(weather_df, aes(x = tmax, y = tmin)) + 
+  geom_hex()
+```
+
+```{r}
+ggplot(weather_df, aes(x = tmax)) + 
+  geom_histogram()
+ggplot(weather_df, aes(x = tmax, fill = name)) + 
+  geom_histogram(position = "dodge", binwidth = 2)
+```
+
+show you the density
+`alpha` makes it transparent, `ajust` can show you more detail.
+
+```{r}
+ggplot(weather_df, aes(x = tmax, fill = name)) + 
+  geom_density(alpha = .4, adjust = .5, color = "blue")
+```
+
+Here is the boxplot
+
+```{r}
+ggplot(weather_df, aes(x = name, y = tmax)) + geom_boxplot()
+```
+
+and density
+
+```{r}
+ggplot(weather_df, aes(x = name, y = tmax)) + 
+  geom_violin(aes(fill = name), alpha = .5) + 
+  stat_summary(fun = "median", color = "blue")
+ggplot(weather_df, aes(x = tmax, y = name)) + 
+  geom_density_ridges(scale = .85)
+```
+
+## Part 2
+
+```{r}
+weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) + 
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily temperature (C)",
+    y = "Maxiumum daily temperature (C)",
+    caption = "Data from the rnoaa package"
+  )
+```
+
+change something on x aes...
+
+```{r}
+weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) + 
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily temperature (C)",
+    y = "Maxiumum daily temperature (C)",
+    caption = "Data from the rnoaa package") + 
+  scale_x_continuous(
+    breaks = c(-15, 0, 15), 
+    labels = c("-15º C", "0", "15"))
+```
+
+about y aes.
+
+```{r}
+weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) + 
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily temperature (C)",
+    y = "Maxiumum daily temperature (C)",
+    caption = "Data from the rnoaa package") + 
+  scale_x_continuous(
+    breaks = c(-15, 0, 15), 
+    labels = c("-15ºC", "0", "15"),
+    limits = c(-20, 30)) + 
+  scale_y_continuous(
+    trans = "sqrt", 
+    position = "right")
+```
+
+control the color of these points...
+
+```{r}
+weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) + 
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily temperature (C)",
+    y = "Maxiumum daily temperature (C)",
+    caption = "Data from the rnoaa package") + 
+  scale_color_hue(name = "Location", h = c(100, 300))
+```
+
+something new: viridis 
+
+```{r}
+ggp_temp_plot = 
+  weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) + 
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily temperature (C)",
+    y = "Maxiumum daily temperature (C)",
+    caption = "Data from the rnoaa package"
+  ) + 
+  viridis::scale_color_viridis(
+    name = "Location", 
+    discrete = TRUE
+  )
+
+ggp_temp_plot
+```
+
+## theme
+
+```{r}
+ggp_temp_plot + 
+  theme_classic() + 
+  theme(legend.position = "bottom")
+```
+
+also: theme_minimal
+
+```{r}
+ggp_temp_plot + 
+  ggthemes::theme_excel() + 
+  theme(legend.position = "bottom")
+```
+
+## setting option
+
+```{r, eval = FALSE}
+library(tidyverse)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+```
+
+```{r}
+central_park = 
+  weather_df %>% 
+  filter(name == "CentralPark_NY")
+
+waikiki = 
+  weather_df %>% 
+  filter(name == "Waikiki_HA")
+
+ggplot(data = waikiki, aes(x = date, y = tmax, color = name)) + 
+  geom_point() + 
+  geom_line(data = central_park)
+```
+
+```{r}
+tmax_tmin_p = 
+  weather_df %>% 
+  ggplot(aes(x = tmax, y = tmin, color = name)) + 
+  geom_point(alpha = .5) +
+  theme(legend.position = "none")
+
+prcp_dens_p = 
+  weather_df %>% 
+  filter(prcp > 0) %>% 
+  ggplot(aes(x = prcp, fill = name)) + 
+  geom_density(alpha = .5) + 
+  theme(legend.position = "none")
+
+tmax_date_p = 
+  weather_df %>% 
+  ggplot(aes(x = date, y = tmax, color = name)) + 
+  geom_point(alpha = .5) +
+  geom_smooth(se = FALSE) + 
+  theme(legend.position = "bottom")
+
+(tmax_tmin_p + prcp_dens_p) / tmax_date_p
+```
+
+put some sort in the table...
+
+```{r}
+weather_df %>%
+  mutate(name = forcats::fct_relevel(name, c("Waikiki_HA", "CentralPark_NY", "Waterhole_WA"))) %>% 
+  ggplot(aes(x = name, y = tmax)) + 
+  geom_violin(aes(fill = name), color = "blue", alpha = .5) + 
+  theme(legend.position = "bottom")
+```
+
+A second example reorders name according to tmax values in each name:
+
+```{r}
+weather_df %>%
+  mutate(name = forcats::fct_reorder(name, tmax)) %>% 
+  ggplot(aes(x = name, y = tmax)) + 
+  geom_violin(aes(fill = name), color = "blue", alpha = .5) + 
+  theme(legend.position = "bottom")
+```
+
+宽数据变长数据, about `pivot_longer`
+
+```{r}
+weather_df %>%
+  select(name, tmax, tmin) %>% 
+  pivot_longer(
+    tmax:tmin,
+    names_to = "observation", 
+    values_to = "temp") %>% 
+  ggplot(aes(x = temp, fill = observation)) +
+  geom_density(alpha = .5) + 
+  facet_grid(~name) + 
+  viridis::scale_fill_viridis(discrete = TRUE)
+```
+
+## revisit the pups
+
+Data from the FAS study
+
+```{r}
+pup_data = 
+  read.csv("./data/FAS_pups.csv") %>%
+  janitor::clean_names() %>%
+  mutate(sex = recode(sex, '1' = "male", '2' = "female"))
+
+litters_data = 
+   read.csv("./data/FAS_litters.csv") %>%
+   janitor::clean_names() %>%
+   separate(group, into = c("dose", "day_of_tx"), sep = 3)#表示将字符串分割，取前三个
+
+fas_data = left_join(pup_data, litters_data, by = "litter_number")
+```
+
+## about `groupby`
+
+```{r setup, warning = F, message = F}
+weather_df =  
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728", "USC00519397", "USS0023B17S"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2017-01-01",
+    date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(
+      id, 
+      USW00094728 = "CentralPark_NY", 
+      USC00519397 = "Waikiki_HA",
+      USS0023B17S = "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10,
+    month = lubridate::floor_date(date, unit = "month")) %>%
+  select(name, id, everything())
+```
+
+```{r}
+weather_df %>%
+  group_by(name, month) #ungroup()可以取消组别设置
+```
+
+## counting things
+
+```{r}
+weather_df %>%
+  group_by(month) %>%
+  summarize(
+    n_obs = n(),
+    n_days = n_distinct(date))
+```
+
+```{r}
+weather_df %>% 
+  mutate(
+    cold = case_when(
+      tmax <  5 ~ "cold",
+      tmax >= 5 ~ "not_cold",
+      TRUE      ~ "" #表示缺省值
+  )) %>% 
+  filter(name != "Waikiki_HA") %>% 
+  group_by(name, cold) %>% 
+  summarize(count = n())
+```
+
+creat a 2*2 tables
+
+```{r}
+weather_df %>% 
+  mutate(cold = case_when(
+    tmax <  5 ~ "cold",
+    tmax >= 5 ~ "not_cold",
+    TRUE     ~ ""
+  )) %>% 
+  filter(name != "Waikiki_HA") %>% 
+  janitor::tabyl(name, cold)
+```
+
+## General summaries
+
+```{r}
+weather_df %>%
+  group_by(month) %>%
+  summarize(
+    mean_tmax = mean(tmax),
+    mean_prec = mean(prcp, na.rm = TRUE),
+    median_tmax = median(tmax),
+    sd_tmax = sd(tmax))
+
+weather_df %>%
+  group_by(name, month) %>%
+  summarize(
+    mean_tmax = mean(tmax),
+    median_tmax = median(tmax))
+
+weather_df %>%
+  group_by(name, month) %>%
+  summarize(across(tmin:prcp, mean))
+
+weather_df %>%
+  group_by(name, month) %>%
+  summarize(mean_tmax = mean(tmax)) %>%
+  ggplot(aes(x = month, y = mean_tmax, color = name)) + 
+    geom_point() + geom_line() + 
+    theme(legend.position = "bottom")
+```
+
+Reminder: sometimes your results are easier to read in another format.
+
+```{r}
+weather_df %>%
+  group_by(name, month) %>%
+  summarize(mean_tmax = mean(tmax)) %>% 
+  pivot_wider(
+    names_from = name,
+    values_from = mean_tmax) %>% 
+  knitr::kable(digits = 1)
+```
+
+## Group `mutate`
+
+```{r}
+weather_df %>%
+  group_by(name) %>%
+  mutate(
+    mean_tmax = mean(tmax, na.rm = TRUE),
+    centered_tmax = tmax - mean_tmax) %>% 
+  ggplot(aes(x = date, y = centered_tmax, color = name)) + 
+    geom_point()
+```
+
+what about window functions?
+
+```{r}
+weather_df %>%
+  group_by(name, month) %>%
+  mutate(temp_ranking = min_rank(tmax))
+
+weather_df %>%
+  group_by(name, month) %>%
+  filter(min_rank(tmax) < 2)
+
+weather_df %>%
+  group_by(name, month) %>%
+  filter(min_rank(desc(tmax)) < 4)
+```
+
+```{r}
+weather_df %>%
+  group_by(name) %>%
+  mutate(temp_change = tmax - lag(tmax))
+
+weather_df %>%
+  group_by(name) %>%
+  mutate(temp_change = tmax - lag(tmax)) %>%
+  summarize(
+    temp_change_sd = sd(temp_change, na.rm = TRUE),
+    temp_change_max = max(temp_change, na.rm = TRUE))
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+
+
+
+
+

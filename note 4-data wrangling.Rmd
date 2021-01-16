@@ -1,0 +1,165 @@
+---
+title: "note_data wrangling"
+author: "jenny"
+date: "2020/10/13"
+output: html_document
+---
+
+## this is repository of Data wrangling i.
+
+```{r setup}
+library(tidyverse)
+```
+
+### Read in same data
+
+```{r}
+litters_df = read.csv("./data/FAS_litters.csv")
+litters_df = janitor::clean_names(litters_df)
+```
+
+### take a look at the data
+
+some methods as follows
+
+```{r}
+head(litters_df, 5)
+#也可以用tail()
+```
+
+
+```{r}
+skimr::skim(litters_df)
+```
+
+### functions in read_csv
+
+```{r}
+litters_df = read.csv("./data/FAS_litters.csv", skip = 8)
+#skip表示跳过前面的几行，colnames=false表示给表格添加新的列名
+names(litters_df)
+```
+
+check out `?read.csv()` for more information.
+
+```{r}
+litters_df = read.csv("./data/FAS_litters.csv")
+litters_df = janitor::clean_names(litters_df)
+```
+
+## Data manipulation
+
+###`select`
+
+choose some columns not others
+
+```{r}
+select(litters_df, group, gd0_weight)
+```
+
+```{r}
+select(litters_df, group, gd0_weight:gd_of_birth)
+```
+
+```{r}
+select(litters_df, -litter_number)
+```
+
+Renaming colunms...
+
+```{r}
+select(litters_df, GROUP = group)
+#只是选出你想要的列，其他列不显示
+```
+
+```{r}
+rename(litters_df, GROUP = group)
+```
+
+```{r}
+select(litters_df, starts_with("gd"))
+#显示以某开头的列
+select(litters_df, litter_number, everything())
+#选择某列及之后的所有列
+relocate(litters_df, litter_number)
+#将某列设置为首列
+
+```
+
+### `filter`
+
+```{r}
+filter(litters_df, gd0_weight >= 22)
+```
+
+```{r}
+filter(litters_df, gd0_weight == 20)
+```
+
+```{r}
+filter(litters_df, gd0_weight >= 20, gd_of_birth == 20)
+```
+
+```{r}
+filter(litters_df, group %in% c("Con7","Mod8"))
+```
+
+`drop_na(litters_data)` will remove any row with a missing value
+`drop_na(litters_data, wt_increase)` will remove rows for which wt_increase is missing.
+
+### `mutate`
+
+```{r}
+mutate(
+  litters_df, 
+  wt_gain = gd18_weight - gd0_weight,
+  group = str_to_lower(group)
+  )
+#str_to_lower表示将字符变成小写
+```
+
+### `arrange`
+
+```{r}
+arrange(litters_df, pups_born_alive)
+#按字母顺序排序
+```
+
+## %>%
+
+```{r}
+litters_data_raw = read.csv("./data/FAS_litters.csv")
+litters_clean_name = janitor::clean_names(litters_data_raw)
+litters_data_selected = select(litters_clean_name, -pups_survive)
+litters_mutated = mutate(litters_data_selected, wt_gain = gd18_weight - gd0_weight)
+litters_without_missing = drop_na(litters_mutated, gd0_weight)
+```
+
+Use the pipe instead.
+
+```{r}
+litters_df = (
+  read.csv("./data/FAS_litters.csv") %>%
+  janitor::clean_names() %>%
+  select(-pups_survive) %>%
+  mutate(wt_gain = gd18_weight - gd0_weight) %>%
+  drop_na(gd0_weight)
+)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
